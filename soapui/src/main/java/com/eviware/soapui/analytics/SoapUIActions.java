@@ -1,17 +1,17 @@
 /*
- * SoapUI, Copyright (C) 2004-2017 SmartBear Software
+ * SoapUI, Copyright (C) 2004-2019 SmartBear Software
  *
- * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent 
- * versions of the EUPL (the "Licence"); 
- * You may not use this work except in compliance with the Licence. 
- * You may obtain a copy of the Licence at: 
- * 
- * http://ec.europa.eu/idabc/eupl 
- * 
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is 
- * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
- * express or implied. See the Licence for the specific language governing permissions and limitations 
- * under the Licence. 
+ * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent
+ * versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ *
+ * http://ec.europa.eu/idabc/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is
+ * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the Licence for the specific language governing permissions and limitations
+ * under the Licence.
  */
 
 package com.eviware.soapui.analytics;
@@ -51,6 +51,9 @@ public enum SoapUIActions {
     RUN_TEST_SUITE_FROM_TOOLBAR("ProjectPanelRunTestSuite", SOAPUI_NG, MAIN_EDITOR),
     RUN_REQUEST_FROM_REQUEST_EDITOR("RequestEditorRunRequest", PROJECTS, MAIN_EDITOR),
     RUN_TEST_STEP_FROM_PANEL("TestStepPanelRunTestStep", SOAPUI_NG, MAIN_EDITOR),
+    SEND_REQUEST("SendRequest", PROJECTS, MAIN_EDITOR),
+    RUN_TEST_STEP("RunTestStep", SOAPUI_NG, MAIN_EDITOR),
+
 
     //Create Functional Model Items
     CREATE_TEST_SUITE_FROM_PROJECT_PANEL("ProjectPanelCreateTestSuite", SOAPUI_NG, MAIN_EDITOR),
@@ -175,7 +178,16 @@ public enum SoapUIActions {
     IMPORT_PREFERENCES("MainMenuImportPreferences", null, MAIN_MENU),
 
     //Tool
-    RUN_TOOL_FROM_COMMAND_LINE("RunToolFromCmdLine", PROJECTS, NO);
+    RUN_TOOL_FROM_COMMAND_LINE("RunToolFromCmdLine", PROJECTS, NO),
+
+    //SoapUI Starter Page
+    EXPLORE_API_CLICK_SEND("ExploreAPIClickSend", SOAPUI_NG, NO),
+    EXPLORE_API_CREATE_TEST("ExploreAPICreateTest", SOAPUI_NG, NO), //Called from API Inspection starter page
+    EXPLORE_API_ADD_HEADER("ExploreAPIAddHeader", SOAPUI_NG, NO),
+    EXPLORE_API_CHANGE_HTTP_METHOD("ExploreAPIchangeHTTPMethod", SOAPUI_NG, NO),
+    EXPLORE_API_CLICK_AUTH_HEADERS_TAB("ExploreAPIClickAuthHeadersTab", SOAPUI_NG, NO),
+    EXPLORE_API_CLICK_BODY_TAB("ExploreAPIClickBodyTab", SOAPUI_NG, NO),
+    EXPLORE_API_CLICK_SAVE_REQUEST("ExploreAPIClickSaveRequest", SOAPUI_NG, NO);
 
     private String actionName;
     private ModuleType moduleType;

@@ -1,5 +1,5 @@
 /*
- * SoapUI, Copyright (C) 2004-2017 SmartBear Software
+ * SoapUI, Copyright (C) 2004-2019 SmartBear Software
  *
  * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent 
  * versions of the EUPL (the "Licence"); 
@@ -23,6 +23,7 @@ import junit.framework.ComparisonFailure;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.awt.event.ActionEvent;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -44,6 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Tools {
@@ -51,6 +53,9 @@ public class Tools {
 
     private static final Logger log = Logger.getLogger(Tools.class);
 
+    private static final Pattern PROPERTY_EXPANSION_EQUALS_PATTERN = Pattern.compile("^\\$\\{(.*)\\}$");
+    private static final Pattern PROPERTY_EXPANSION_CONTAINS_PATTERN =
+            Pattern.compile("(\\$\\{(.*)\\})|(%24%7B.*%7D)|(%2524%257B.*%257D)|(%252524%25257B.*%25257D)");
 
     public static String[] tokenizeArgs(String args) {
         if (args == null || args.trim().length() == 0) {
@@ -640,5 +645,18 @@ public class Tools {
                 }
             }
         }));
+    }
+
+    public static boolean isPropertyExpansion(@Nullable String value) {
+        return value != null && PROPERTY_EXPANSION_EQUALS_PATTERN.matcher(value).matches();
+    }
+
+    public static List<String> getPropertyExpansions(String value) {
+        List<String> properyExpansions = new ArrayList<>();
+        Matcher matcher = PROPERTY_EXPANSION_CONTAINS_PATTERN.matcher(value);
+        while (matcher.find()) {
+            properyExpansions.add(matcher.group());
+        }
+        return properyExpansions;
     }
 }

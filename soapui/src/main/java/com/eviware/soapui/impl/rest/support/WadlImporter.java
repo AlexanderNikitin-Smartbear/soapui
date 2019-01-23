@@ -1,5 +1,5 @@
 /*
- * SoapUI, Copyright (C) 2004-2017 SmartBear Software
+ * SoapUI, Copyright (C) 2004-2019 SmartBear Software
  *
  * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent 
  * versions of the EUPL (the "Licence"); 
@@ -81,6 +81,11 @@ public class WadlImporter {
             XmlObject xmlObject = XmlUtils.createXmlObject(new URL(wadlUrl));
 
             String content = xmlObject.xmlText();
+
+            if (!UISupport.handleDefinitionPropertyExpansions(wadlUrl, content)) {
+                return;
+            }
+
             Element element = ((Document) xmlObject.getDomNode()).getDocumentElement();
 
             // try to allow older namespaces
@@ -92,7 +97,7 @@ public class WadlImporter {
                     || !element.getNamespaceURI().equals(Constants.WADL11_NS)) {
                 throw new Exception("Document is not a WADL application with " + Constants.WADL11_NS + " namespace");
             }
-            content = PropertyExpansionRemover.removeExpansions(content);
+
             ApplicationDocument applicationDocument = ApplicationDocument.Factory.parse(content);
             application = applicationDocument.getApplication();
 

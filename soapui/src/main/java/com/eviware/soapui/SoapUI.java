@@ -1,17 +1,17 @@
 /*
- * SoapUI, Copyright (C) 2004-2017 SmartBear Software
+ * SoapUI, Copyright (C) 2004-2019 SmartBear Software
  *
- * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent 
- * versions of the EUPL (the "Licence"); 
- * You may not use this work except in compliance with the Licence. 
- * You may obtain a copy of the Licence at: 
- * 
- * http://ec.europa.eu/idabc/eupl 
- * 
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is 
- * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
- * express or implied. See the Licence for the specific language governing permissions and limitations 
- * under the Licence. 
+ * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent
+ * versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ *
+ * http://ec.europa.eu/idabc/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is
+ * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the Licence for the specific language governing permissions and limitations
+ * under the Licence.
  */
 
 package com.eviware.soapui;
@@ -29,11 +29,13 @@ import com.eviware.soapui.analytics.SoapUIActions;
 import com.eviware.soapui.analytics.UniqueUserIdentifier;
 import com.eviware.soapui.autoupdate.SoapUIAutoUpdaterUtils;
 import com.eviware.soapui.autoupdate.SoapUIUpdateProvider;
+import com.eviware.soapui.impl.RoundButton;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.impl.actions.ImportWsdlProjectAction;
 import com.eviware.soapui.impl.actions.NewEmptyProjectAction;
 import com.eviware.soapui.impl.actions.NewRestProjectAction;
 import com.eviware.soapui.impl.actions.NewWsdlProjectAction;
+import com.eviware.soapui.impl.rest.actions.explorer.EndpointExplorerAction;
 import com.eviware.soapui.impl.rest.actions.project.NewRestServiceAction;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
@@ -131,6 +133,7 @@ import org.apache.log4j.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -139,6 +142,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -164,6 +168,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -212,7 +218,7 @@ public class SoapUI {
     public static final String BUILDINFO_PROPERTIES = "/buildinfo.properties";
     public static final String STARTER_PAGE_HEADER = "SoapUI Starter Page";
     public static final String STARTER_PAGE_TOOL_TIP = "Info on SoapUI";
-    public static String FRAME_ICON = "/SoapUI-OS-5.2_16-16.png;/SoapUI-OS-5.2_24-24.png;/SoapUI-OS-5.2_32-32.png;/SoapUI-OS-5.2_48-48.png;/SoapUI-OS-5.2_256-256.png";
+    public static String FRAME_ICON = "/SoapUI-OS_16-16.png;/SoapUI-OS_24-24.png;/SoapUI-OS_32-32.png;/SoapUI-OS_48-48.png;/SoapUI-OS_256-256.png";
 
     public static String STARTER_PAGE_ERROR_URL = "file://" + System.getProperty("soapui.home", ".")
             + "/starter-page.html";
@@ -265,6 +271,9 @@ public class SoapUI {
     private static JXToolBar mainToolbar;
     private static String[] mainArgs;
     private static GCTimerTask gcTimerTask;
+
+    private static JPanel endpointExplorerButtonPanel;
+    private static JButton endpointExplorerButton;
 
     private final static ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(
             getMaxThreadpoolSize(), new SoapUIThreadCreator());
@@ -378,6 +387,14 @@ public class SoapUI {
         mainToolbar.add(new PreferencesActionDelegate());
         applyProxyButton = (JToggleButton) mainToolbar.add(new JToggleButton(new ApplyProxyButtonAction()));
         updateProxyButtonAndTooltip();
+        mainToolbar.addSpace(15);
+        createToolbarSeparator();
+        mainToolbar.addSpace(10);
+        createEndpointExplorerButton();
+        endpointExplorerButtonPanel.add(endpointExplorerButton);
+        mainToolbar.add(endpointExplorerButtonPanel);
+        mainToolbar.addSpace(10);
+        createToolbarSeparator();
 
         mainToolbar.addGlue();
         searchField = new JTextField(20) {
@@ -434,6 +451,55 @@ public class SoapUI {
         }
     }
 
+    private void createEndpointExplorerButton() {
+        endpointExplorerButtonPanel = new JPanel(new BorderLayout());
+        endpointExplorerButtonPanel.setPreferredSize(new Dimension(130, 32));
+        endpointExplorerButtonPanel.setMaximumSize(new Dimension(130, 32));
+        endpointExplorerButton = new RoundButton(6);
+        endpointExplorerButton.setForeground(Color.WHITE);
+        endpointExplorerButton.setBackground(new Color(52, 137, 209));
+        endpointExplorerButton.setText("Endpoint Explorer");
+        if (UISupport.isMac()) {
+            endpointExplorerButton.setOpaque(true);
+        }
+        EndpointExplorerAction action = new EndpointExplorerAction();
+        endpointExplorerButton.addActionListener(action);
+        endpointExplorerButton.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                endpointExplorerButton.setBackground(new Color(39, 104, 158));
+                endpointExplorerButton.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                endpointExplorerButton.setBackground(new Color(52, 137, 209));
+                endpointExplorerButton.repaint();
+            }
+
+            public void mouseClicked(MouseEvent e) {
+            }
+
+            public void mousePressed(MouseEvent e) {
+            }
+
+            public void mouseReleased(MouseEvent e) {
+            }
+        });
+    }
+
+    private void createToolbarSeparator() {
+        JPanel separatorPanel = new JPanel(new BorderLayout());
+        separatorPanel.setPreferredSize(new Dimension(5, 40));
+        separatorPanel.setMaximumSize(new Dimension(5, 40));
+        JSeparator separator = new JSeparator();
+        separator.setOrientation(JSeparator.VERTICAL);
+        separator.setBackground(new Color(112, 112, 112));
+        separator.setLocation(10, 0);
+        separatorPanel.add(separator);
+        mainToolbar.add(separatorPanel);
+    }
 
     private JMenuBar buildMainMenu() {
         menuBar = new JMenuBar() {
@@ -511,7 +577,7 @@ public class SoapUI {
         helpMenu.add(new VersionUpdateAction());
         helpMenu.addSeparator();
         helpMenu.add(new ShowOnlineHelpAction("SoapUI Pro Trial", HelpUrls.TRIAL_URL,
-                "Apply for SoapUI Pro Trial License", "/SoapUI-OS-5.2_16-16.png"));
+                "Apply for SoapUI Pro Trial License", "/SoapUI-OS_16-16.png"));
         helpMenu.add(new OpenUrlAction("Privacy Policy", "http://www.soapui.org" + HelpUrls.SMARTBEAR_PRIVACY_POLICY_URL));
         helpMenu.addSeparator();
         helpMenu.add(new OpenUrlAction("soapui.org", "http://www.soapui.org"));

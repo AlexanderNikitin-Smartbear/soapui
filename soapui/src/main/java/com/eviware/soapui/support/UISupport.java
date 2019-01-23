@@ -1,5 +1,5 @@
 /*
- * SoapUI, Copyright (C) 2004-2017 SmartBear Software
+ * SoapUI, Copyright (C) 2004-2019 SmartBear Software
  *
  * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent 
  * versions of the EUPL (the "Licence"); 
@@ -1011,5 +1011,19 @@ public class UISupport {
             }
         }
         return null;
+    }
+
+    public static boolean handleDefinitionPropertyExpansions(String url, String definition) {
+        List<String> propertyExpansions = Tools.getPropertyExpansions(definition);
+        if (propertyExpansions.size() > 0) {
+            if (UISupport.isHeadless()) {
+                SoapUI.getErrorLog().error("The definition [" + url + "] contains potential security vulnerabilities.");
+                return false;
+            }
+            DefinitionPropertyExpansionsDialog dialog = new DefinitionPropertyExpansionsDialog();
+            dialog.showDialog(propertyExpansions);
+            return dialog.isImportDefinition();
+        }
+        return true;
     }
 }
