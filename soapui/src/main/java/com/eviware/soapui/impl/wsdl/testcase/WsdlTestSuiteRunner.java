@@ -1,17 +1,17 @@
 /*
  * SoapUI, Copyright (C) 2004-2019 SmartBear Software
  *
- * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent 
- * versions of the EUPL (the "Licence"); 
- * You may not use this work except in compliance with the Licence. 
- * You may obtain a copy of the Licence at: 
- * 
- * http://ec.europa.eu/idabc/eupl 
- * 
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is 
- * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
- * express or implied. See the Licence for the specific language governing permissions and limitations 
- * under the Licence. 
+ * Licensed under the EUPL, Version 1.1 or - as soon as they will be approved by the European Commission - subsequent
+ * versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ *
+ * http://ec.europa.eu/idabc/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is
+ * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the Licence for the specific language governing permissions and limitations
+ * under the Licence.
  */
 
 package com.eviware.soapui.impl.wsdl.testcase;
@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * WSDL TestCase Runner - runs all steps in a testcase and collects performance
@@ -48,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlTestSuiteRunContext> implements
         TestSuiteRunner {
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final Object lock = new Object();
     private final AtomicInteger runCount = new AtomicInteger(-1);
     private volatile boolean running;
 
@@ -68,32 +67,25 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
     }
 
     public void onCancel(String reason) {
-        try {
-            lock.lock();
+        synchronized (lock) {
             for (TestCaseRunner runner : activeRunners.toArray(new TestCaseRunner[activeRunners.size()])) {
                 runner.cancel(reason);
             }
-        } finally {
-            lock.unlock();
         }
     }
 
     public void onFail(String reason) {
-        try {
-            lock.lock();
+        synchronized (lock) {
             for (TestCaseRunner runner : activeRunners.toArray(new TestCaseRunner[activeRunners.size()])) {
                 runner.fail(reason);
             }
-        } finally {
-            lock.unlock();
         }
     }
 
     public void internalRun(WsdlTestSuiteRunContext runContext) throws Exception {
         WsdlTestSuite testSuite = getTestRunnable();
 
-        try {
-            lock.lock();
+        synchronized (lock) {
             listeners = testSuite.getTestSuiteRunListeners();
             testSuite.runSetupScript(runContext, this);
             if (!isRunning()) {
@@ -108,10 +100,7 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
             if (!isRunning()) {
                 return;
             }
-        } finally {
-            lock.unlock();
         }
-
         if (testSuite.getRunType() == TestSuiteRunType.SEQUENTIAL) {
             runSequential(testSuite, runContext);
         } else if (testSuite.getRunType() == TestSuiteRunType.PARALLEL) {
@@ -122,8 +111,7 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
     }
 
     private void runParallel(WsdlTestSuite testSuite, WsdlTestSuiteRunContext runContext) {
-        try {
-            lock.lock();
+        synchronized (lock) {
             currentTestCaseIndex = -1;
             currentTestCase = null;
 
@@ -138,8 +126,6 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
             }
             runCount.set(i);
             running = true;
-        } finally {
-            lock.unlock();
         }
 
         while (runCount.get() != 0) {
@@ -193,9 +179,7 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
     }
 
     protected void internalFinally(WsdlTestSuiteRunContext runContext) {
-        try {
-            lock.lock();
-
+        synchronized (lock) {
             WsdlTestSuite testSuite = getTestRunnable();
 
             try {
@@ -208,14 +192,11 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
 
             runContext.clear();
             listeners = null;
-        } finally {
-            lock.unlock();
         }
     }
 
     private void notifyAfterRun() {
-        try {
-            lock.lock();
+        synchronized (lock) {
             if (listeners == null || listeners.length == 0) {
                 return;
             }
@@ -223,29 +204,23 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
             for (int i = 0; i < listeners.length; i++) {
                 listeners[i].afterRun(this, getRunContext());
             }
-        } finally {
-            lock.unlock();
         }
     }
 
     private void notifyBeforeRun() {
-        try {
-            lock.lock();
-        if (listeners == null || listeners.length == 0) {
-            return;
-        }
+        synchronized (lock) {
+            if (listeners == null || listeners.length == 0) {
+                return;
+            }
 
-        for (int i = 0; i < listeners.length; i++) {
-            listeners[i].beforeRun(this, getRunContext());
-        }
-        } finally {
-            lock.unlock();
+            for (int i = 0; i < listeners.length; i++) {
+                listeners[i].beforeRun(this, getRunContext());
+            }
         }
     }
 
     private void notifyAfterRunTestCase(TestCaseRunner testCaseRunner) {
-        try {
-            lock.lock();
+        synchronized (lock) {
             if (listeners == null || listeners.length == 0) {
                 return;
             }
@@ -253,14 +228,11 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
             for (int i = 0; i < listeners.length; i++) {
                 listeners[i].afterTestCase(this, getRunContext(), testCaseRunner);
             }
-        } finally {
-            lock.unlock();
         }
     }
 
     private void notifyBeforeRunTestCase(TestCase testCase) {
-        try {
-            lock.lock();
+        synchronized (lock) {
             if (listeners == null || listeners.length == 0) {
                 return;
             }
@@ -268,8 +240,6 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
             for (int i = 0; i < listeners.length; i++) {
                 listeners[i].beforeTestCase(this, getRunContext(), testCase);
             }
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -278,29 +248,20 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
     }
 
     public List<TestCaseRunner> getResults() {
-        try {
-            lock.lock();
+        synchronized (lock) {
             return Arrays.asList(finishedRunners.toArray(new TestCaseRunner[finishedRunners.size()]));
-        } finally {
-            lock.unlock();
         }
     }
 
     public int getCurrentTestCaseIndex() {
-        try {
-            lock.lock();
+        synchronized (lock) {
             return currentTestCaseIndex;
-        } finally {
-            lock.unlock();
         }
     }
 
     public WsdlTestCase getCurrentTestCase() {
-        try {
-            lock.lock();
+        synchronized (lock) {
             return currentTestCase;
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -315,17 +276,13 @@ public class WsdlTestSuiteRunner extends AbstractTestRunner<WsdlTestSuite, WsdlT
                         cause.printStackTrace();
                     }
                 }
-
-                try {
-                    lock.lock();
+                synchronized (lock) {
                     notifyAfterRunTestCase(testRunner);
 
                     finishedRunners.add(testRunner);
 
                     testRunner.getTestCase().removeTestRunListener(parallellTestRunListener);
 
-                } finally {
-                    lock.unlock();
                 }
             } finally {
                 runCount.decrementAndGet();
